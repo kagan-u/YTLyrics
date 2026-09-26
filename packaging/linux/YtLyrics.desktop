@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=YtLyrics
+GenericName=Lyrics Video Factory
+Comment=Turn comment requests into rendered lyrics videos
+Exec=YtLyrics
+Icon=ytlyrics
+Terminal=false
+Categories=AudioVideo;Audio;Video;
+StartupWMClass=YtLyrics

@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Wix xmlns="http://schemas.microsoft.com/wix/2006/wi">
+  <!--
+    Builds YtLyrics.msi from dist/YtLyrics.exe (onefile build).
+    Run from repo root:
+      candle packaging\windows\YtLyrics.wxs -out files.wixobj
+      light files.wixobj -out dist\YtLyrics.msi -ext WixUIExtension
+  -->
+  <Product
+      Id="*"
+      Name="YtLyrics"
+      Language="1033"
+      Version="1.0.0.0"
+      Manufacturer="Vi3ecode"
+      UpgradeCode="8A2F5F5B-1C4D-4E9A-9C7E-3B6D2E1A0F41">
+    <Package
+        InstallerVersion="500"
+        Compressed="yes"
+        InstallScope="perMachine"
+        Description="YtLyrics - Lyrics Video Factory"
+        Comments="YouTube lyrics video automation" />
+    <MajorUpgrade
+        DowngradeErrorMessage="A newer version of YtLyrics is already installed." />
+    <MediaTemplate EmbedCab="yes" />
+
+    <Icon Id="AppIcon.exe" SourceFile="dist\YtLyrics.exe" />
+    <Property Id="ARPPRODUCTICON" Value="AppIcon.exe" />
+
+    <Directory Id="TARGETDIR" Name="SourceDir">
+      <Directory Id="ProgramFiles64Folder">
+        <Directory Id="INSTALLDIR" Name="YtLyrics" />
+      </Directory>
+      <Directory Id="ProgramMenuFolder">
+        <Directory Id="AppMenuFolder" Name="YtLyrics" />
+      </Directory>
+    </Directory>
+
+    <DirectoryRef Id="INSTALLDIR">
+      <Component Id="MainExecutable" Guid="{5D8B1F0E-77A2-4C3B-BB64-9E0C4D7A2F16}">
+        <File Id="YtLyricsExe" Source="dist\YtLyrics.exe" KeyPath="yes">
+          <Shortcut
+              Id="StartMenuShortcut"
+              Directory="AppMenuFolder"
+              Name="YtLyrics"
+              Description="Lyrics Video Factory"
+              WorkingDirectory="INSTALLDIR"
+              Advertise="yes" />
+        </File>
+      </Component>
+    </DirectoryRef>
+
+    <DirectoryRef Id="AppMenuFolder">
+      <Component Id="StartMenuRemove" Guid="{C3A9E6D4-2B81-4F55-8A0E-6D1B9C4F7A22}">
+        <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
+        <RegistryValue
+            Root="HKLM"
+            Key="Software\Vi3ecode\YtLyrics"
+            Name="startMenu"
+            Type="integer"
+            Value="1"
+            KeyPath="yes" />
+      </Component>
+    </DirectoryRef>
+
+    <Feature Id="MainFeature" Title="YtLyrics" Level="1">
+      <ComponentRef Id="MainExecutable" />
+      <ComponentRef Id="StartMenuRemove" />
+    </Feature>
+
+    <UIRef Id="WixUI_FeatureTree" />
+    <WixVariable Id="WixUILicenseRtf" Value="packaging\windows\license.rtf" />
+  </Product>
+</Wix>

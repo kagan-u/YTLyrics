@@ -1,0 +1,110 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+env:
+  PYTHON_VERSION: "3.12"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+      - name: Install dependencies
+        run: pip install -r requirements.txt ruff pytest
+      - name: Lint
+        run: ruff check ytlyrics/ scripts/ tests/
+      - name: Tests
+        run: QT_QPA_PLATFORM=offscreen python -m pytest -q
+
+  build:
+    needs: test
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [windows-latest, macos-latest, ubuntu-22.04]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Install Linux Qt runtime libraries
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 \
+            libxcb-xinerama0 libxcb-xfixes0 libdbus-1-3 libfontconfig1
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt pyinstaller
+
+      - name: Build with PyInstaller
+        run: pyinstaller --noconfirm YtLyrics.spec
+
+      # ---- Windows: wrap onefile exe into an MSI installer (WiX)
+      - name: Package MSI (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*" -Directory -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $wix) {
+            choco install wixtoolset -y --no-progress
+            $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*" -Directory | Select-Object -First 1
+          }
+          $bin = Join-Path $wix.FullName "bin"
+          & (Join-Path $bin "candle.exe") packaging\windows\YtLyrics.wxs -out YtLyrics.wixobj
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+          & (Join-Path $bin "light.exe") YtLyrics.wixobj -out dist\YtLyrics.msi -ext WixUIExtension
+          if ($LASTEXITCODE -ne 0) { exit 1 }
+
+      # ---- macOS: DMG + zipped .app
+      - name: Package DMG (macOS)
+        if: runner.os == 'macOS'
+        run: |
+          hdiutil create -volname "YtLyrics" -srcfolder dist/YtLyrics.app \
+            -ov -format UDZO dist/YtLyrics.dmg
+          ditto -c -k --keepParent dist/YtLyrics.app dist/YtLyrics.app.zip
+
+      # ---- Linux: AppImage + portable tar.gz
+      - name: Package AppImage + tar.gz (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p YtLyrics.AppDir/usr/bin \
+                   YtLyrics.AppDir/usr/share/icons/hicolor/256x256/apps
+          cp dist/YtLyrics YtLyrics.AppDir/usr/bin/YtLyrics
+          cp packaging/linux/AppRun YtLyrics.AppDir/AppRun
+          cp packaging/linux/YtLyrics.desktop YtLyrics.AppDir/YtLyrics.desktop
+          cp packaging/icons/ytlyrics.png YtLyrics.AppDir/ytlyrics.png
+          cp packaging/icons/ytlyrics.png \
+             YtLyrics.AppDir/usr/share/icons/hicolor/256x256/apps/ytlyrics.png
+          chmod +x YtLyrics.AppDir/AppRun YtLyrics.AppDir/usr/bin/YtLyrics
+          curl -sSL -o appimagetool \
+            https://github.com/AppImage/appimagetool/releases/download/continuous/appimagetool-x86_64.AppImage
+          chmod +x appimagetool
+          export APPIMAGE_EXTRACT_AND_RUN=1
+          export ARCH=x86_64
+          ./appimagetool YtLyrics.AppDir dist/YtLyrics.AppImage
+          tar -czf dist/YtLyrics-linux-x86_64.tar.gz -C YtLyrics.AppDir .
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: YtLyrics-${{ runner.os }}
+          if-no-files-found: error
+          path: |
+            dist/*.exe
+            dist/*.msi
+            dist/*.dmg
+            dist/*.zip
+            dist/*.AppImage
+            dist/*.tar.gz

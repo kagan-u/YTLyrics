@@ -1,0 +1,10 @@
+.venv/
+__pycache__/
+*.pyc
+build/
+dist/
+*.spec.bak
+.ytlyrics_local/
+.DS_Store
+.shots/
+*.wixobj
