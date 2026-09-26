@@ -384,6 +384,15 @@ class MainWindow(QMainWindow):
                 "must be 'Desktop app' (not Web application).",
                 "error",
             )
+        elif "access_denied" in err:
+            self.logs.append(
+                "Google returned 403 access_denied — the OAuth consent "
+                "screen is still in Testing mode. Open Google Cloud → "
+                "APIs & Services → OAuth consent screen and either press "
+                "'Publish app', or add this Google account under "
+                "'Test users'.",
+                "error",
+            )
 
     def _refresh_auth_status(self) -> None:
         creds = load_credentials(TOKEN_PATH)

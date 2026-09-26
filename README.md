@@ -80,7 +80,11 @@ Output lands in `~/.ytlyrics/output/`; config in `~/.ytlyrics/config.json`.
   manually.
 - **`redirect_uri_mismatch`** — you used a *Web application* client. Use
   *Desktop app* instead.
-- **`access_denied`** — you cancelled the Google consent screen; retry.
+- **`access_denied` / 403** — the app is still in *Testing* mode. Open
+  Google Cloud → *APIs & Services → OAuth consent screen* and either
+  click **Publish app** (recommended), or add your Google account under
+  **Test users**. Test-mode tokens also expire after 7 days and are
+  limited to 100 test users.
 
 ## Prebuilt downloads
 
