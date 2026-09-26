@@ -67,6 +67,21 @@ Output lands in `~/.ytlyrics/output/`; config in `~/.ytlyrics/config.json`.
 > 10,000/day YouTube API quota — about **6 videos per day** without a quota
 > increase request.
 
+### Troubleshooting
+
+- **`Error 401: invalid_client` / "The OAuth client was not found"** —
+  the credentials are wrong. In Google Cloud → *Credentials*, create the
+  OAuth client with application type **Desktop app** (not *Web
+  application*), then copy the exact **Client ID**
+  (ends with `.apps.googleusercontent.com`) and its **Client Secret** into
+  Settings. A deleted/re-created client makes old credentials invalid too.
+- **Browser didn't open** — the authorization link is printed in the app's
+  log console (`Authorize: https://accounts.google.com/...`); open it
+  manually.
+- **`redirect_uri_mismatch`** — you used a *Web application* client. Use
+  *Desktop app* instead.
+- **`access_denied`** — you cancelled the Google consent screen; retry.
+
 ## Prebuilt downloads
 
 Every push to `main` builds installers via GitHub Actions

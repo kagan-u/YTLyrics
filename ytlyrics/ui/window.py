@@ -55,6 +55,7 @@ DB_PATH = APP_DIR / "ytlyrics.db"
 class AuthThread(QThread):
     done = Signal(str)
     failed = Signal(str)
+    url = Signal(str)
 
     def __init__(self, cfg: Config, parent=None) -> None:
         super().__init__(parent)
@@ -63,7 +64,10 @@ class AuthThread(QThread):
     def run(self) -> None:
         try:
             creds = run_auth_flow(
-                self.cfg.client_id, self.cfg.client_secret, TOKEN_PATH
+                self.cfg.client_id,
+                self.cfg.client_secret,
+                TOKEN_PATH,
+                on_url=self.url.emit,
             )
             title = ""
             try:
@@ -355,6 +359,9 @@ class MainWindow(QMainWindow):
         self._auth_thread = AuthThread(self.cfg, self)
         self._auth_thread.done.connect(self._on_auth_done)
         self._auth_thread.failed.connect(self._on_auth_failed)
+        self._auth_thread.url.connect(
+            lambda u: self.logs.append(f"Authorize: {u}", "info")
+        )
         self._auth_thread.start()
 
     def _on_auth_done(self, title: str) -> None:
@@ -369,6 +376,14 @@ class MainWindow(QMainWindow):
         self.settings.connect_btn.setEnabled(True)
         self.settings.set_auth_status("Connection failed", False)
         self.logs.append(f"Auth error: {err}", "error")
+        if "invalid_client" in err:
+            self.logs.append(
+                "Google rejected the credentials. Check Settings — "
+                "Client ID must end with .apps.googleusercontent.com, "
+                "Client Secret must match it, and the OAuth client type "
+                "must be 'Desktop app' (not Web application).",
+                "error",
+            )
 
     def _refresh_auth_status(self) -> None:
         creds = load_credentials(TOKEN_PATH)
