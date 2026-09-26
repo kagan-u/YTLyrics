@@ -36,7 +36,7 @@
     </Directory>
 
     <DirectoryRef Id="INSTALLDIR">
-      <Component Id="MainExecutable" Guid="{5D8B1F0E-77A2-4C3B-BB64-9E0C4D7A2F16}">
+      <Component Id="MainExecutable" Guid="{5D8B1F0E-77A2-4C3B-BB64-9E0C4D7A2F16}" Win64="yes">
         <File Id="YtLyricsExe" Source="dist\YtLyrics.exe" KeyPath="yes">
           <Shortcut
               Id="StartMenuShortcut"
@@ -50,10 +50,10 @@
     </DirectoryRef>
 
     <DirectoryRef Id="AppMenuFolder">
-      <Component Id="StartMenuRemove" Guid="{C3A9E6D4-2B81-4F55-8A0E-6D1B9C4F7A22}">
+      <Component Id="StartMenuRemove" Guid="{C3A9E6D4-2B81-4F55-8A0E-6D1B9C4F7A22}" Win64="yes">
         <RemoveFolder Id="RemoveAppMenuFolder" On="uninstall" />
         <RegistryValue
-            Root="HKLM"
+            Root="HKCU"
             Key="Software\Vi3ecode\YtLyrics"
             Name="startMenu"
             Type="integer"

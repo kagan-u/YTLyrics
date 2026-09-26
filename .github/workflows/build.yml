@@ -62,7 +62,7 @@ jobs:
             $wix = Get-ChildItem "C:\Program Files (x86)\WiX Toolset*" -Directory | Select-Object -First 1
           }
           $bin = Join-Path $wix.FullName "bin"
-          & (Join-Path $bin "candle.exe") packaging\windows\YtLyrics.wxs -out YtLyrics.wixobj
+          & (Join-Path $bin "candle.exe") -arch x64 packaging\windows\YtLyrics.wxs -out YtLyrics.wixobj
           if ($LASTEXITCODE -ne 0) { exit 1 }
           & (Join-Path $bin "light.exe") YtLyrics.wixobj -out dist\YtLyrics.msi -ext WixUIExtension
           if ($LASTEXITCODE -ne 0) { exit 1 }
